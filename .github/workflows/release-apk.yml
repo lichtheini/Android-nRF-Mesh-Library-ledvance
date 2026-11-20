@@ -1,0 +1,31 @@
+build-apk:
+  name: Build APK
+  needs: tag
+  runs-on: ubuntu-26.04
+  timeout-minutes: 30
+
+  steps:
+    - uses: actions/checkout@v7
+      with:
+        ref: ${{ inputs.dry-run && github.sha || format('refs/tags/{0}', inputs.version) }}
+        fetch-depth: 0
+
+    - uses: actions/setup-java@v6
+      with:
+        distribution: 'jetbrains'
+        java-version: '21'
+        cache: 'gradle'
+
+    - name: Build Debug APK
+      run: |
+        if [[ "$DRY_RUN" == "true" ]]; then
+          git tag "$RELEASE_VERSION"
+        fi
+
+        ./gradlew :app:assembleDebug
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: nrf-mesh-${{ env.RELEASE_VERSION }}
+        path: app/build/outputs/apk/debug/*.apk
