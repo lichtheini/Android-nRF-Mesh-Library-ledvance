@@ -1,31 +1,92 @@
-build-apk:
-  name: Build APK
-  needs: tag
-  runs-on: ubuntu-26.04
-  timeout-minutes: 30
+name: Release-apk
 
-  steps:
-    - uses: actions/checkout@v7
-      with:
-        ref: ${{ inputs.dry-run && github.sha || format('refs/tags/{0}', inputs.version) }}
-        fetch-depth: 0
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, e.g. 3.5.2'
+        required: true
+        type: string
 
-    - uses: actions/setup-java@v6
-      with:
-        distribution: 'jetbrains'
-        java-version: '21'
-        cache: 'gradle'
+      dry-run:
+        description: 'Dry run'
+        required: false
+        type: boolean
+        default: false
 
-    - name: Build Debug APK
-      run: |
-        if [[ "$DRY_RUN" == "true" ]]; then
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_VERSION: ${{ inputs.version }}
+  BRANCH: ${{ github.ref_name }}
+  DRY_RUN: ${{ inputs.dry-run }}
+
+jobs:
+
+  check:
+    name: Check
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - shell: bash
+        run: |
+          if [[ "${{ github.ref_type }}" != "branch" ]]; then
+            echo "::error::Run this workflow on a branch."
+            exit 1
+          fi
+
+          if [[ ! "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::'$RELEASE_VERSION' is not a valid version."
+            exit 1
+          fi
+
+          if gh api "repos/${{ github.repository }}/git/ref/tags/$RELEASE_VERSION" > /dev/null 2>&1; then
+            if [[ "$DRY_RUN" == "true" ]]; then
+              echo "::warning::Tag already exists, ignored during dry run."
+            else
+              echo "::error::Tag $RELEASE_VERSION already exists."
+              exit 1
+            fi
+          fi
+
+  tag:
+    name: Tag
+    needs: check
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - shell: bash
+        run: |
           git tag "$RELEASE_VERSION"
-        fi
 
-        ./gradlew :app:assembleDebug
+          if [[ "$DRY_RUN" == "true" ]]; then
+            echo "Dry run: tag not pushed."
+          else
+            git push origin "refs/tags/$RELEASE_VERSION"
+          fi
 
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: nrf-mesh-${{ env.RELEASE_VERSION }}
-        path: app/build/outputs/apk/debug/*.apk
+  build-apk:
+    name: Build APK
+    needs: tag
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.dry-run && github.sha || 
