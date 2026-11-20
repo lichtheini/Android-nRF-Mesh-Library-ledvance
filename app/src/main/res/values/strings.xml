@@ -21,7 +21,7 @@
   -->
 
 <resources>
-    <string name="app_name">nRF Mesh (Old)</string>
+    <string name="app_name">nRF Mesh (ledvance)</string>
     <string name="feature_name">Mesh</string>
     <string name="title_scanner">Scanner</string>
     <string name="sub_title_scanning_nodes">Looking for unprovisioned proxy nodes…</string>
@@ -95,7 +95,7 @@
     <string name="identify_action">Identify</string>
 
     <string name="ok">OK</string>
-    <string name="new_app_title">Try our new nRF Mesh</string>
+    <string name="new_app_title">Try this LEDVANCE BLE Mesh APP</string>
     <string name="new_app_subtitle">The new nRF Mesh is here, with a fresh design and powerful new features such as Device Firmware Update (DFU)</string>
     <string name="new_app_feature_wizard">Network Wizard</string>
     <string name="new_app_feature_connectivity">Automatic connectivity</string>
