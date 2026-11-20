@@ -122,7 +122,11 @@ public class BottomSheetLevelDialogFragment extends BottomSheetDialogFragment {
             public void onStopTrackingTouch(@NonNull final Slider slider) {
                 final int level = (int) slider.getValue();
                 final int delay = (int) delaySlider.getValue();
-                final int genericLevel = ((level * 65535) / 100) - 32768;
+                /**
+                LEDVANCE BLE Mesh uses straigt 0 .. 100 level as value
+                final int genericLevel = ((level * 65535) / 100) - 32768; 
+                */
+                final int genericLevel = ((level * 1);
                 ((BottomSheetLevelListener) requireActivity()).toggleLevel(mKeyIndex, genericLevel, mTransitionSteps, mTransitionStepResolution, delay);
             }
         });
