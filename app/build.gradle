@@ -29,7 +29,7 @@ android {
     compileSdkVersion(37)
 
     defaultConfig {
-        applicationId "no.nordicsemi.android.nrfmeshprovisioner"
+        applicationId "de.volkslicht.meshtestapp"
         minSdk(19)
         targetSdk(37)
         versionCode getVersionCodeFromTags()
